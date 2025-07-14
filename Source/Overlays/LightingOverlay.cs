@@ -67,7 +67,8 @@ namespace TD_Enhancement_Pack
 		}
 	}
 
-	[HarmonyPatch(typeof(GlowGrid), "DirtyCache")]
+	// In RW1.6, GlowGrid.DirtyCache is changed to DirtyCell with better performance and more functionality.
+	[HarmonyPatch(typeof(GlowGrid), "DirtyCell")]
 	static class GlowGridDirty_Patch
 	{
 		public static void Postfix(Map ___map)

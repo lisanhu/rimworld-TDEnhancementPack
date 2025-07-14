@@ -83,7 +83,7 @@ namespace TD_Enhancement_Pack
 		{
 			if (Mod.settings.areaForTypes)
 			{
-				Rect headerRect = new Rect(rect.x,rect.y,rect.width,24);
+				Rect headerRect = new Rect(rect.x, rect.y, rect.width, 24);
 				rect.yMin += 24;
 
 				headerRect.width -= (WidgetRow.IconSize + WidgetRow.LabelGap) * NumButtonsRightOfThis;
@@ -125,29 +125,18 @@ namespace TD_Enhancement_Pack
 	}
 
 
-	//private static void DoAreaRow(Rect rect, Area area)
+	//private void DoAreaRow(Rect rect, Area area)
 	[HarmonyPatch(typeof(Dialog_ManageAreas))]
 	[HarmonyPatch("DoAreaRow")]
 	static class AreaRowPatch
 	{
 		public static Area copiedArea = null;
-		
+
 		//Insert FilterForUrgentHediffs when counting needed medicine
 		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
-			MethodInfo IconInfo = AccessTools.Method(
-				typeof(WidgetRow), nameof(WidgetRow.Icon));
-			MethodInfo DoButtonIconInfo = AccessTools.Method(
-				typeof(AreaRowPatch), nameof(DoButtonIcon));
-
-
 			MethodInfo EndGroupInfo = AccessTools.Method(
 				typeof(Widgets), nameof(Widgets.EndGroup));
-
-
-
-			MethodInfo LabelEllipsesInfo = AccessTools.Method(
-				typeof(WidgetRow), nameof(WidgetRow.LabelEllipses));
 
 			MethodInfo DoOrderButtonInfo = AccessTools.Method(
 				typeof(AreaRowPatch), nameof(DoOrderButton));
@@ -156,14 +145,7 @@ namespace TD_Enhancement_Pack
 
 			foreach (CodeInstruction i in instructions)
 			{
-				//IL_0055: callvirt instance valuetype[UnityEngine]UnityEngine.Rect Verse.WidgetRow::Icon(class [UnityEngine] UnityEngine.Texture2D, string)
-				if (i.Calls(IconInfo))
-				{
-					yield return new CodeInstruction(OpCodes.Ldarg_2); //Area
-					yield return new CodeInstruction(OpCodes.Call, DoButtonIconInfo); //WidgetRow
-					continue;
-				}
-
+				// Insert order buttons before EndGroup
 				if (i.Calls(EndGroupInfo))
 				{
 					yield return new CodeInstruction(OpCodes.Ldloc_0) { labels = i.labels }; //WidgetRow
@@ -174,6 +156,7 @@ namespace TD_Enhancement_Pack
 
 				yield return i;
 
+				// Insert copy/paste functionality after WidgetRow is created
 				if (i.opcode == OpCodes.Stloc_0)
 				{
 					yield return new CodeInstruction(OpCodes.Ldloc_0); //widgetRow
@@ -248,22 +231,22 @@ namespace TD_Enhancement_Pack
 			else widgetRow.Gap(WidgetRow.IconSize);
 		}
 
-		public static Rect DoButtonIcon(WidgetRow widgetRow, Texture2D tex, string tooltip, Area area)
-		{
-			if (widgetRow.ButtonIcon(tex, tooltip))
-			{
-				if (area is Area_Allowed aa)
-				{
-					Find.WindowStack.Add(new Dialog_RecolorArea(aa));
-					//TODO: better dialog
-				}
-			}
-			return default;//popped off stack, unused
-		}
+		// public static Rect DoButtonIcon(WidgetRow widgetRow, Texture2D tex, string tooltip, Area area)
+		// {
+		// 	if (widgetRow.ButtonIcon(tex, tooltip))
+		// 	{
+		// 		if (area is Area_Allowed aa)
+		// 		{
+		// 			Find.WindowStack.Add(new Dialog_RecolorArea(aa));
+		// 			//TODO: better dialog
+		// 		}
+		// 	}
+		// 	return default;//popped off stack, unused
+		// }
 
 		//private void IncrementPosition(float amount)
 		public delegate void IncrementPositionDel(WidgetRow row, float amount);
-		public static IncrementPositionDel IncrementPosition = 
+		public static IncrementPositionDel IncrementPosition =
 			AccessTools.MethodDelegate<IncrementPositionDel>(AccessTools.Method(typeof(WidgetRow), "IncrementPosition"));
 
 		public static void CopyPasteAreaRow(WidgetRow widgetRow, Area area)
@@ -274,10 +257,10 @@ namespace TD_Enhancement_Pack
 				IncrementPosition(widgetRow, WidgetRow.IconSize);//skip drawing copy icon
 			else if (widgetRow.ButtonIcon(TexButton.Copy))
 				copiedArea = area;
-			
+
 			if (widgetRow.ButtonIcon(TexButton.Paste))
 			{
-				if(copiedArea == null || copiedArea == area || Event.current.button == 1)
+				if (copiedArea == null || copiedArea == area || Event.current.button == 1)
 				{
 					List<FloatMenuOption> otherAreas = new List<FloatMenuOption>(area.Map.areaManager.AllAreas
 						.FindAll(a => !(a is Area_Allowed))
@@ -292,7 +275,7 @@ namespace TD_Enhancement_Pack
 		public static void PasteArea(Area copy, Area paste)
 		{
 			if (copy != null)
-				foreach(IntVec3 cell in copy.ActiveCells)
+				foreach (IntVec3 cell in copy.ActiveCells)
 					paste[cell] = true;
 		}
 
@@ -434,18 +417,18 @@ namespace TD_Enhancement_Pack
 		}
 	}
 
-	
+
 	[HarmonyPatch(typeof(AreaManager))]
 	[HarmonyPatch("TryMakeNewAllowed")]
 	static class TryMakeNewAllowed_Patch
 	{
-		public static void Postfix(bool __result,	Area area, AreaManager __instance)
+		public static void Postfix(bool __result, Area area, AreaManager __instance)
 		{
 			if (__result)
 				__instance.map.GetComponent<MapComponent_AreaOrder>()?.Notify_Added(area);
 		}
 	}
-	
+
 	[HarmonyPatch(typeof(AreaManager))]
 	[HarmonyPatch("NotifyEveryoneAreaRemoved")]
 	static class NotifyEveryoneAreaRemoved_Patch
@@ -456,7 +439,7 @@ namespace TD_Enhancement_Pack
 		}
 	}
 
-	
+
 	[HarmonyPatch(typeof(Area_Allowed), "ListPriority", MethodType.Getter)]
 	class AreaOrder
 	{
@@ -553,7 +536,7 @@ namespace TD_Enhancement_Pack
 
 			foreach (CodeInstruction i in instructions)
 			{
-				if(i.Calls(AssignableAsAllowedInfo))
+				if (i.Calls(AssignableAsAllowedInfo))
 				{
 					yield return new CodeInstruction(OpCodes.Ldarg_1);//Pawn p
 					yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DoAllowedAreaSelectors_Patch), nameof(AssignableAsAllowedForPawn)));
@@ -583,14 +566,14 @@ namespace TD_Enhancement_Pack
 		//private static void DoAreaSelector(Rect rect, Pawn p, Area area)
 		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
-			MethodInfo WidgetLabelInfo = AccessTools.Method(typeof(Widgets), "Label", new Type[] { typeof(Rect), typeof(string)});
+			MethodInfo WidgetLabelInfo = AccessTools.Method(typeof(Widgets), "Label", new Type[] { typeof(Rect), typeof(string) });
 
 			MethodInfo SetGUIColorInfo = AccessTools.Method(typeof(DoAreaSelector_Patch), nameof(SetGUIColor));
 			MethodInfo SetGUIColorWhiteInfo = AccessTools.Method(typeof(DoAreaSelector_Patch), nameof(SetGUIColorWhite));
 
 			foreach (CodeInstruction i in instructions)
 			{
-				if(i.Calls(WidgetLabelInfo))
+				if (i.Calls(WidgetLabelInfo))
 				{
 					yield return new CodeInstruction(OpCodes.Ldarg_2);
 					yield return new CodeInstruction(OpCodes.Call, SetGUIColorInfo);

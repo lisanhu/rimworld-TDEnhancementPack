@@ -21,7 +21,7 @@ namespace TD_Enhancement_Pack
 		public static bool TrueAlwaysManWhyNot(ThingDef d) => Mod.settings.billCountEquippedAny || d.IsWeapon;
 	}
 
-	[HarmonyPatch(typeof(RecipeWorkerCounter), nameof(RecipeWorkerCounter.CountValidThings))]
+	[HarmonyPatch(typeof(RecipeWorkerCounter), "CountValidThings", new Type[] { typeof(List<Thing>), typeof(Bill_Production), typeof(ThingDef) })]
 	class FixCount
 	{
 		//public int CountValidThings(List<Thing> things, Bill_Production bill, ThingDef def)

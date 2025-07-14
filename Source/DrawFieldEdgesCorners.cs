@@ -8,7 +8,13 @@ using UnityEngine;
 
 namespace TD_Enhancement_Pack
 {
-	[HarmonyPatch(typeof(GenDraw), "DrawFieldEdges", new Type[] { typeof(List<IntVec3>), typeof(Color), typeof(float?) } )]
+	[HarmonyPatch(typeof(GenDraw), "DrawFieldEdges")]
+	[HarmonyPatch(new Type[] {
+		typeof(List<IntVec3>),
+		typeof(Color),
+		typeof(float?),
+		typeof(HashSet<IntVec3>),
+		typeof(int) })]
 	class DrawFieldEdgesCorners
 	{
 		private static BoolGrid fieldGrid;
@@ -73,7 +79,7 @@ namespace TD_Enhancement_Pack
 
 					adjEmpty[4] = (c.x < x - 1 && c.z < z - 1 && !fieldGrid[c.x + 1, c.z + 1]);//northeast
 					adjEmpty[5] = (c.x < x - 1 && c.z > 0 && !fieldGrid[c.x + 1, c.z - 1]);//southeast
-					adjEmpty[6] = (c.x > 0 && c.z > 0 && !fieldGrid[c.x - 1 , c.z - 1]);//southwest
+					adjEmpty[6] = (c.x > 0 && c.z > 0 && !fieldGrid[c.x - 1, c.z - 1]);//southwest
 					adjEmpty[7] = (c.x > 0 && c.z < z - 1 && !fieldGrid[c.x - 1, c.z + 1]);//northwest
 
 					//Count # of edges empty
@@ -106,7 +112,7 @@ namespace TD_Enhancement_Pack
 							}
 						}
 						//Opposite edges : just draw single edge twice
-						if(!corner)
+						if (!corner)
 							for (int i = 0; i < 4; i++)
 								if (adjEmpty[i])
 									Graphics.DrawMesh(MeshPool.plane10, cellVector, new Rot4(i).AsQuat, materialEdge, 0);
@@ -120,11 +126,11 @@ namespace TD_Enhancement_Pack
 
 					//Draw corner fill-ins
 					for (int i = 0; i < 4; i++)
-						if (adjEmpty[i+4] && !adjEmpty[i] && !adjEmpty[(i+1)%4])
+						if (adjEmpty[i + 4] && !adjEmpty[i] && !adjEmpty[(i + 1) % 4])
 							Graphics.DrawMesh(MeshPool.plane10, cellVector, new Rot4(i).AsQuat, materialCorner, 0);
 				}
 
-				return false;
+			return false;
 		}
 	}
 }
